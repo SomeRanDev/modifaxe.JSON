@@ -1,0 +1,22 @@
+{
+	"name": "modifaxe.json",
+	"version": "1.0.0",
+	"description": "Adds support for the .json format in Modifaxe.",
+	"url": "https://github.com/SomeRanDev/modifaxe.JSON",
+	"license": "MIT",
+	"tags": [
+		"modifaxe",
+		"debug",
+		"testing",
+		"mod",
+		"modding",
+		"macro",
+		"compiler"
+	],
+	"dependencies": {
+		"modifaxe": "git:https://github.com/SomeRanDev/modifaxe"
+	},
+	"classPath": "src/",
+	"releasenote": "Initial Release",
+	"contributors": ["SomeRanDev"]
+}
