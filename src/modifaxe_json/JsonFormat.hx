@@ -2,6 +2,7 @@ package modifaxe_json;
 
 import haxe.macro.Expr;
 
+import modifaxe.Output;
 import modifaxe.builder.File;
 import modifaxe.format.Format;
 
@@ -44,9 +45,14 @@ class JsonFormat extends Format {
 					buf.add(entry.name);
 					buf.add("\": ");
 
-					// note: `haxe.Json.parse` seems to allow new lines in strings,
-					//       so we won't worry about it here...
-					buf.add(entry.value.toValueString());
+					switch(entry.value) {
+						// wrap enum identifiers with quotes for json string
+						case EEnum(identifier, _): buf.add('"$identifier"');
+
+						// note: `haxe.Json.parse` seems to allow new lines in strings,
+						//       so we won't worry about it here...
+						case _: buf.add(entry.value.toValueString());
+					}
 				}
 
 				buf.add("\n\t}");
@@ -80,8 +86,23 @@ class JsonFormat extends Format {
 					final entryName = entry.name;
 					final identifier = entry.getUniqueName();
 
+					var valueExpr = macro data.$sectionName.$entryName;
+					
+					// Wrap with enum loader function if loading enum
+					switch(entry.value) {
+						case EEnum(_, enumType): {
+							final enumLoadIdent = Output.getFunctionForEnumType(enumType);
+							if(enumLoadIdent != null) {
+								valueExpr = macro ModifaxeLoader.$enumLoadIdent($valueExpr);
+							}
+						}
+						case _:
+					}
+
 					// Store expression in list.
-					expressions.push(macro ModifaxeData.$identifier = data.$sectionName.$entryName);
+					if(valueExpr != null) {
+						expressions.push(macro ModifaxeData.$identifier = $valueExpr);
+					}
 				}
 			}
 
