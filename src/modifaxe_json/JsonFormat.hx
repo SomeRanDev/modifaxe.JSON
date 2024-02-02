@@ -54,7 +54,7 @@ class JsonFormat extends Format {
 
 			buf.add("\n}");
 
-			sys.io.File.saveContent(file.getPath(extension), buf.toString());
+			modifaxe.Output.saveContent(file.getPath(extension), buf.toString());
 		}
 	}
 
