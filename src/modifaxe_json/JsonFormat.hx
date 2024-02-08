@@ -16,6 +16,51 @@ class JsonFormat extends Format {
 	static var extension = "json";
 
 	/**
+		Generates an expression that loads data from `.json` files.
+	**/
+	public function generateLoadExpression(files: Array<File>): Expr {
+		final blockExpressions = [];
+
+		for(file in files) {
+			final expressions = [];
+
+			final path = file.getPath(extension);
+			#if macro // fix display error with $v{}
+			expressions.push(
+				macro final data = haxe.Json.parse(sys.io.File.getContent($v{path}))
+			);
+			#end
+
+			for(section in file.sections) {
+				for(entry in section.entries) {
+					final sectionName = section.name;
+					final entryName = entry.name;
+					final identifier = entry.getUniqueName();
+
+					var valueExpr = macro data.$sectionName.$entryName;
+					
+					// Wrap with enum loader function if loading enum
+					switch(entry.value) {
+						case EEnum(_, enumType): {
+							valueExpr = generateEnumLoadingExpr(enumType, valueExpr);
+						}
+						case _:
+					}
+
+					// Store expression in list.
+					if(valueExpr != null) {
+						expressions.push(macro $i{identifier} = $valueExpr);
+					}
+				}
+			}
+
+			blockExpressions.push(macro $b{expressions});
+		}
+
+		return macro @:mergeBlock $b{blockExpressions};
+	}
+
+	/**
 		Generates `.json` files from the provided `File`s.
 	**/
 	public function saveModFiles(files: Array<File>): Void {
@@ -62,53 +107,5 @@ class JsonFormat extends Format {
 
 			modifaxe.Output.saveContent(file.getPath(extension), buf.toString());
 		}
-	}
-
-	/**
-		Generates an expression that loads data from `.json` files.
-	**/
-	public function generateLoadExpression(files: Array<File>): Expr {
-		final blockExpressions = [];
-
-		for(file in files) {
-			final expressions = [];
-
-			final path = file.getPath(extension);
-			#if macro // fix display error with $v{}
-			expressions.push(
-				macro final data = haxe.Json.parse(sys.io.File.getContent($v{path}))
-			);
-			#end
-
-			for(section in file.sections) {
-				for(entry in section.entries) {
-					final sectionName = section.name;
-					final entryName = entry.name;
-					final identifier = entry.getUniqueName();
-
-					var valueExpr = macro data.$sectionName.$entryName;
-					
-					// Wrap with enum loader function if loading enum
-					switch(entry.value) {
-						case EEnum(_, enumType): {
-							final enumLoadIdent = Output.getFunctionForEnumType(enumType);
-							if(enumLoadIdent != null) {
-								valueExpr = macro ModifaxeLoader.$enumLoadIdent($valueExpr);
-							}
-						}
-						case _:
-					}
-
-					// Store expression in list.
-					if(valueExpr != null) {
-						expressions.push(macro ModifaxeData.$identifier = $valueExpr);
-					}
-				}
-			}
-
-			blockExpressions.push(macro $b{expressions});
-		}
-
-		return macro @:mergeBlock $b{blockExpressions};
 	}
 }
