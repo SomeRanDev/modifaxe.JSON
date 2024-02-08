@@ -1,6 +1,6 @@
 {
 	"name": "modifaxe.json",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Adds support for the .json format in Modifaxe.",
 	"url": "https://github.com/SomeRanDev/modifaxe.JSON",
 	"license": "MIT",
